@@ -1,0 +1,17 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #1a1a1f;
+  color: #f0f0f0;
+  font-family: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+#root {
+  height: 100%;
+}
