@@ -6,9 +6,11 @@ import { getWeaponStage, STAGE_DURATION_SEC } from '../game/constants'
 import { useGameLoop } from '../hooks/useGameLoop'
 import Hud from './Hud'
 import Controls from './Controls'
+import TutorialHint from './TutorialHint'
 
 const CANVAS_WIDTH = 400
 const CANVAS_HEIGHT = 700
+const HINT_DURATION_SEC = 6
 
 function summarize(state) {
   return {
@@ -18,6 +20,7 @@ function summarize(state) {
     weaponLevel: getWeaponStage(state.killCount).level,
     timeLeft: Math.ceil(state.timeLeftSec),
     status: state.status,
+    showHint: state.attacksFired === 0 && state.elapsedSec < HINT_DURATION_SEC,
   }
 }
 
@@ -61,13 +64,21 @@ export default function GameCanvas({ onGameEnd }) {
   return (
     <div className="game-screen">
       <Hud {...hud} timeMax={STAGE_DURATION_SEC} />
-      <canvas
-        ref={canvasRef}
-        width={CANVAS_WIDTH}
-        height={CANVAS_HEIGHT}
-        className="game-canvas"
+      <div className="canvas-wrap">
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_WIDTH}
+          height={CANVAS_HEIGHT}
+          className="game-canvas"
+        />
+        <TutorialHint visible={hud.showHint} />
+      </div>
+      <Controls
+        onAttack={engine.attack}
+        onLeft={engine.moveLeft}
+        onRight={engine.moveRight}
+        attackHintActive={hud.showHint}
       />
-      <Controls onAttack={engine.attack} onLeft={engine.moveLeft} onRight={engine.moveRight} />
     </div>
   )
 }

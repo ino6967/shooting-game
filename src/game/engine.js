@@ -3,18 +3,23 @@ import {
   MAX_LIVES,
   STAGE_DURATION_SEC,
   INITIAL_PIZZA,
+  PIZZA_MAX,
   PLAYER_ROW_Y,
   PROJECTILE_SPEED,
   ICE_SLIP_DURATION_SEC,
   ICE_INPUT_DELAY_MS,
+  PICKUP_SPEED,
+  PICKUP_SPAWN_INTERVAL_MS,
   getWeaponStage,
 } from './constants'
 import { createEnemy, occupiesLane, damageEnemy } from './enemies'
+import { createPickup } from './pickups'
 
 const HIT_RANGE_Y = 0.045
 const ENEMY_SPAWN_INTERVAL_MS = [900, 1500]
 const PROJECTILE_SPIN_RAD_PER_SEC = 14
 const ATTACK_FLASH_MS = 150
+const HIT_EFFECT_MS = 220
 
 function randRange([min, max]) {
   return min + Math.random() * (max - min)
@@ -36,13 +41,21 @@ export function createGameEngine() {
       timeLeftSec: STAGE_DURATION_SEC,
       attackCooldownMs: 0,
       spawnTimerMs: randRange(ENEMY_SPAWN_INTERVAL_MS),
+      pickupSpawnTimerMs: randRange(PICKUP_SPAWN_INTERVAL_MS),
       pendingMove: null, // { direction, remainingMs }
       iceLanes: {}, // lane -> 残り滑り時間(ms)
       enemies: [],
       projectiles: [],
+      pickups: [],
+      hitEffects: [],
       lastHitFlashMs: 0,
       attackFlashMs: 0,
+      attacksFired: 0,
     }
+  }
+
+  function addPizza(amount) {
+    state.pizza = Math.min(PIZZA_MAX, state.pizza + amount)
   }
 
   function isLaneIcy(lane) {
@@ -75,6 +88,7 @@ export function createGameEngine() {
     state.pizza -= 1
     state.attackCooldownMs = stage.cooldownMs
     state.attackFlashMs = ATTACK_FLASH_MS
+    state.attacksFired += 1
 
     const lanes = stage.multiLane
       ? [state.lane - 1, state.lane, state.lane + 1].filter((l) => l >= 0 && l < LANE_COUNT)
@@ -115,6 +129,30 @@ export function createGameEngine() {
       state.enemies.push(createEnemy(LANE_COUNT, state.elapsedSec))
       state.spawnTimerMs = randRange(ENEMY_SPAWN_INTERVAL_MS)
     }
+
+    state.pickupSpawnTimerMs -= dtMs
+    if (state.pickupSpawnTimerMs <= 0) {
+      state.pickups.push(createPickup(LANE_COUNT, PICKUP_SPEED))
+      state.pickupSpawnTimerMs = randRange(PICKUP_SPAWN_INTERVAL_MS)
+    }
+  }
+
+  function updatePickups(dtSec) {
+    for (const pickup of state.pickups) {
+      pickup.y += pickup.speed * dtSec
+      if (!pickup.collected && pickup.lane === state.lane && pickup.y >= PLAYER_ROW_Y - 0.03) {
+        pickup.collected = true
+        addPizza(1)
+      }
+    }
+    state.pickups = state.pickups.filter((p) => !p.collected && p.y < 1.15)
+  }
+
+  function updateHitEffects(dtMs) {
+    for (const effect of state.hitEffects) {
+      effect.ms -= dtMs
+    }
+    state.hitEffects = state.hitEffects.filter((e) => e.ms > 0)
   }
 
   function fireRangedAttack(enemy) {
@@ -172,8 +210,9 @@ export function createGameEngine() {
         if (Math.abs(enemy.y - projectile.y) > HIT_RANGE_Y) continue
 
         const defeated = damageEnemy(enemy, 1)
+        state.hitEffects.push({ lane: projectile.lane, y: enemy.y, ms: HIT_EFFECT_MS })
         if (defeated) {
-          state.pizza += enemy.reward
+          addPizza(enemy.reward)
           state.killCount += 1
         }
         if (!projectile.pierce) {
@@ -200,6 +239,8 @@ export function createGameEngine() {
     updateSpawning(dtMs)
     updateEnemies(dtSec, dtMs)
     updateProjectiles(dtSec)
+    updatePickups(dtSec)
+    updateHitEffects(dtMs)
 
     if (state.lives <= 0) {
       state.status = 'gameover'
