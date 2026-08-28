@@ -13,6 +13,8 @@ import { createEnemy, occupiesLane, damageEnemy } from './enemies'
 
 const HIT_RANGE_Y = 0.045
 const ENEMY_SPAWN_INTERVAL_MS = [900, 1500]
+const PROJECTILE_SPIN_RAD_PER_SEC = 14
+const ATTACK_FLASH_MS = 150
 
 function randRange([min, max]) {
   return min + Math.random() * (max - min)
@@ -39,6 +41,7 @@ export function createGameEngine() {
       enemies: [],
       projectiles: [],
       lastHitFlashMs: 0,
+      attackFlashMs: 0,
     }
   }
 
@@ -71,6 +74,7 @@ export function createGameEngine() {
     const stage = getWeaponStage(state.killCount)
     state.pizza -= 1
     state.attackCooldownMs = stage.cooldownMs
+    state.attackFlashMs = ATTACK_FLASH_MS
 
     const lanes = stage.multiLane
       ? [state.lane - 1, state.lane, state.lane + 1].filter((l) => l >= 0 && l < LANE_COUNT)
@@ -82,6 +86,8 @@ export function createGameEngine() {
         lane,
         y: PLAYER_ROW_Y - 0.03,
         pierce: stage.pierce,
+        ageMs: 0,
+        rotation: 0,
       })
     }
   }
@@ -154,6 +160,8 @@ export function createGameEngine() {
   function updateProjectiles(dtSec) {
     for (const projectile of state.projectiles) {
       projectile.y -= PROJECTILE_SPEED * dtSec
+      projectile.ageMs += dtSec * 1000
+      projectile.rotation += PROJECTILE_SPIN_RAD_PER_SEC * dtSec
     }
 
     for (const projectile of state.projectiles) {
@@ -186,6 +194,7 @@ export function createGameEngine() {
     state.timeLeftSec = Math.max(0, state.timeLeftSec - dtSec)
     state.attackCooldownMs = Math.max(0, state.attackCooldownMs - dtMs)
     if (state.lastHitFlashMs > 0) state.lastHitFlashMs = Math.max(0, state.lastHitFlashMs - dtMs)
+    if (state.attackFlashMs > 0) state.attackFlashMs = Math.max(0, state.attackFlashMs - dtMs)
 
     updateIce(dtMs)
     updateSpawning(dtMs)

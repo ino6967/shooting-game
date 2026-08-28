@@ -88,24 +88,43 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  width: min(400px, 92vw);
+  justify-content: center;
 }
 
 .control-btn {
+  min-width: 72px;
+  min-height: 64px;
   padding: 14px 20px;
-  font-size: 1.2rem;
-  border-radius: 12px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 14px;
   border: none;
   background: #3a3a44;
   color: #fff;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-shadow: 0 4px 0 #22222a;
+  transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.05s ease;
 }
 
 .attack-btn {
+  flex: 1;
   background: #ff5a3c;
-  font-size: 1rem;
+  font-size: 1.15rem;
   padding: 14px 24px;
+  box-shadow: 0 4px 0 #a83a24;
 }
 
-.control-btn:active {
-  transform: scale(0.95);
+.control-btn.is-pressed {
+  background: #55556a;
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #22222a;
+}
+
+.attack-btn.is-pressed {
+  background: #ff7c5c;
+  box-shadow: 0 1px 0 #a83a24;
 }
