@@ -61,12 +61,44 @@
   padding: 8px;
 }
 
-.game-canvas {
+.canvas-wrap {
+  position: relative;
   width: min(400px, 92vw);
   aspect-ratio: 400 / 700;
+}
+
+.game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
   border-radius: 8px;
   border: 2px solid #444;
   touch-action: none;
+}
+
+.tutorial-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: center;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.tutorial-hint.is-hidden {
+  opacity: 0;
 }
 
 .hud {
@@ -127,4 +159,22 @@
 .attack-btn.is-pressed {
   background: #ff7c5c;
   box-shadow: 0 1px 0 #a83a24;
+}
+
+.attack-btn-icon {
+  font-size: 1.5rem;
+  margin-right: 6px;
+}
+
+.attack-btn.is-hint {
+  animation: attack-btn-pulse 1s ease-in-out infinite;
+}
+
+@keyframes attack-btn-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 0 #a83a24, 0 0 0 0 rgba(255, 90, 60, 0.6);
+  }
+  50% {
+    box-shadow: 0 4px 0 #a83a24, 0 0 0 10px rgba(255, 90, 60, 0);
+  }
 }

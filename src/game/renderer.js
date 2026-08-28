@@ -112,11 +112,8 @@ function drawEnemy(ctx, width, height, laneWidth, enemy) {
   const y = enemy.y * height
   const boxWidth = enemy.laneSpan * laneWidth * 0.82
 
-  ctx.save()
-  if (enemy.hitFlashMs > 0) ctx.globalAlpha = 0.6
   ctx.fillStyle = style.color
   ctx.fillRect(x - boxWidth / 2, y - 22, boxWidth, 44)
-  ctx.restore()
 
   ctx.save()
   ctx.translate(x, y - 26)
@@ -133,6 +130,15 @@ function drawEnemy(ctx, width, height, laneWidth, enemy) {
   ctx.textBaseline = 'middle'
   ctx.fillText(String(enemy.displayHp), x, y + 4)
 
+  // 被弾直後は白く点滅させて、当たったことがはっきり分かるようにする
+  if (enemy.hitFlashMs > 0) {
+    ctx.save()
+    ctx.globalAlpha = Math.min(1, enemy.hitFlashMs / 200) * 0.85
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(x - boxWidth / 2, y - 22, boxWidth, 44)
+    ctx.restore()
+  }
+
   if (enemy.rangedFlashMs > 0 && enemy.rangedFlashLane != null) {
     const flashX = laneCenterX(enemy.rangedFlashLane, 1, laneWidth)
     ctx.strokeStyle = enemy.inflictsIce ? 'rgba(120,210,255,0.9)' : 'rgba(255,80,80,0.9)'
@@ -148,14 +154,59 @@ function drawProjectile(ctx, width, height, laneWidth, projectile) {
   const x = laneCenterX(projectile.lane, 1, laneWidth)
   const y = projectile.y * height
   const growth = Math.min(1, (projectile.ageMs ?? 999) / 120) // 発射直後にポップインさせる
-  const radius = laneWidth * 0.15 * (0.6 + 0.4 * growth)
+  const radius = laneWidth * 0.24 * (0.6 + 0.4 * growth)
+  const rotation = projectile.rotation ?? 0
 
-  // 飛んできた軌跡を薄く残して、投げた勢いが分かるようにする
-  ctx.globalAlpha = 0.3
-  drawPizza(ctx, x, y + radius * 2, radius * 0.75, projectile.rotation ?? 0)
+  // 飛んできた軌跡を複数残して、移動しているのがはっきり分かるようにする
+  const trailOffsets = [radius * 1.6, radius * 3.0, radius * 4.4]
+  const trailAlphas = [0.35, 0.22, 0.12]
+  for (let i = 0; i < trailOffsets.length; i++) {
+    ctx.globalAlpha = trailAlphas[i]
+    drawPizza(ctx, x, y + trailOffsets[i], radius * 0.8, rotation)
+  }
   ctx.globalAlpha = 1
 
-  drawPizza(ctx, x, y, radius, projectile.rotation ?? 0)
+  drawPizza(ctx, x, y, radius, rotation)
+}
+
+function drawPickup(ctx, width, height, laneWidth, pickup) {
+  const x = laneCenterX(pickup.lane, 1, laneWidth)
+  const y = pickup.y * height
+  const radius = laneWidth * 0.18
+  const bob = Math.sin(pickup.y * 40) * 3 // 落ちているピザを少し揺らして目立たせる
+
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255, 210, 60, 0.8)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.arc(x, y + bob, radius + 4, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.restore()
+
+  drawPizza(ctx, x, y + bob, radius, 0)
+}
+
+function drawHitEffects(ctx, width, height, laneWidth, hitEffects) {
+  for (const effect of hitEffects) {
+    const x = laneCenterX(effect.lane, 1, laneWidth)
+    const y = effect.y * height
+    const t = effect.ms / 220 // 1(発生直後) -> 0(消滅直前)
+
+    ctx.save()
+    ctx.globalAlpha = t
+    ctx.strokeStyle = '#ffe27a'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.arc(x, y, laneWidth * (0.1 + 0.3 * (1 - t)), 0, Math.PI * 2)
+    ctx.stroke()
+
+    ctx.fillStyle = '#ffe27a'
+    ctx.font = 'bold 20px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('💥', x, y)
+    ctx.restore()
+  }
 }
 
 function drawHitFlash(ctx, width, height, lastHitFlashMs) {
@@ -170,8 +221,10 @@ export function renderGame(ctx, width, height, state) {
   drawBackground(ctx, width, height)
   drawIceLanes(ctx, width, height, state.iceLanes)
 
+  for (const pickup of state.pickups) drawPickup(ctx, width, height, laneWidth, pickup)
   for (const enemy of state.enemies) drawEnemy(ctx, width, height, laneWidth, enemy)
   for (const projectile of state.projectiles) drawProjectile(ctx, width, height, laneWidth, projectile)
+  drawHitEffects(ctx, width, height, laneWidth, state.hitEffects)
 
   drawAttackFlash(ctx, width, height, state.lane, state.attackFlashMs)
   drawPlayer(ctx, width, height, state.lane)

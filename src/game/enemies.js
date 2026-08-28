@@ -77,6 +77,6 @@ export function occupiesLane(enemy, lane) {
 export function damageEnemy(enemy, amount) {
   enemy.hp = Math.max(0, enemy.hp - amount)
   enemy.displayHp = Math.round(enemy.displayHpMax * (enemy.hp / enemy.maxHp))
-  enemy.hitFlashMs = 120
+  enemy.hitFlashMs = 200
   return enemy.hp <= 0
 }

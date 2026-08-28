@@ -18,7 +18,7 @@ function usePressFeedback(action) {
   ]
 }
 
-export default function Controls({ onLeft, onRight, onAttack }) {
+export default function Controls({ onLeft, onRight, onAttack, attackHintActive }) {
   const [leftPressed, leftHandlers] = usePressFeedback(onLeft)
   const [rightPressed, rightHandlers] = usePressFeedback(onRight)
   const [attackPressed, attackHandlers] = usePressFeedback(onAttack)
@@ -33,11 +33,11 @@ export default function Controls({ onLeft, onRight, onAttack }) {
         ◀
       </button>
       <button
-        className={`control-btn attack-btn${attackPressed ? ' is-pressed' : ''}`}
+        className={`control-btn attack-btn${attackPressed ? ' is-pressed' : ''}${attackHintActive ? ' is-hint' : ''}`}
         aria-label="ピザを投げる"
         {...attackHandlers}
       >
-        🍕投げる
+        <span className="attack-btn-icon">🍕</span>投げる
       </button>
       <button
         className={`control-btn${rightPressed ? ' is-pressed' : ''}`}

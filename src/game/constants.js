@@ -2,13 +2,18 @@ export const LANE_COUNT = 5
 export const MAX_LIVES = 5
 export const STAGE_DURATION_SEC = 75
 export const INITIAL_PIZZA = 10
+export const PIZZA_MAX = 100
 
 export const PLAYER_ROW_Y = 0.85 // 画面高さに対する縦位置(0=上, 1=下)
 export const SPAWN_ROW_Y = -0.08
 
-export const PROJECTILE_SPEED = 1.6 // 画面高さ/秒
+export const PROJECTILE_SPEED = 1 // 画面高さ/秒(見やすさ優先でゆっくりめ)
 export const ICE_SLIP_DURATION_SEC = 3
 export const ICE_INPUT_DELAY_MS = 220
+
+// 道中に落ちているピザアイテム(拾うと所持ピザ+1)
+export const PICKUP_SPEED = 0.15
+export const PICKUP_SPAWN_INTERVAL_MS = [3000, 6000]
 
 // 撃破数に応じた武器進化(ラン中限定)
 export const WEAPON_STAGES = [
